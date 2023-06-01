@@ -39,14 +39,19 @@ def is_commanded(Requester: CommandRequester):
 
 @app.post("/api/client/response/file", status_code=200)
 def client_response(file: UploadFile, UUID: str):
-    # try:
-    file_type = os.path.splitext(file.filename)[1]
-    Database.insert_file(file, file_type, str(UUID))
-    return {"Status": True}
+    try:
+        Database.insert_file(file, str(UUID))
+        return {"Status": True}
+    except Exception as e:
+        logger.error(str(e))
+        return {"Status": False}
 
 
-"""
-except Exception as e:
-    logger.error(str(e))
-    return {"Status": False}
-"""
+@app.post("/api/client/response/text", status_code=200)
+def client_response(resp: ClientResponse):
+    try:
+        Database.insert_response(resp)
+        return {"Status": True}
+    except Exception as e:
+        logger.error(str(e))
+        return {"Status": False}

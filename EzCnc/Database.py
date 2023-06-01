@@ -90,11 +90,24 @@ class DB:
         );
         """
 
+        response_table = """
+
+        CREATE TABLE IF NOT EXISTS
+        response(
+            id INTEGER,
+            response_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+            command TEXT NOT NULL,
+            response,
+            result INTEGER,
+            FOREIGN KEY(id) REFERENCES victims(id)
+        );
+        """
+
         self.cr.execute(victims_table)
         self.cr.execute(victims_data_table)
-
         self.cr.execute(files_table)
         self.cr.execute(commands_table)
+        self.cr.execute(response_table)
 
     def uuid_to_id(self, uuid: str):
         resp = self.cr.execute("SELECT id FROM victims WHERE uuid = ?", (uuid,))
@@ -123,8 +136,14 @@ class DB:
     def new_command(self, command: Command) -> bool:
         try:
             Query = "INSERT INTO commands(command,target,parameter) VALUES(?,?,?)"
-            UUID = self.name_to_uuid(str(command.target))
-            self.cr.execute(Query, (command.command, UUID, command.parameter))
+            self.cr.execute(
+                Query,
+                (
+                    command.command,
+                    self.name_to_uuid(str(command.target)),
+                    command.parameter,
+                ),
+            )
             self.db.commit()
             return True
         except TypeError:
@@ -144,9 +163,39 @@ class DB:
         except Exception as e:
             raise EzCncError(f"Exception occured while checking for commands [ {e} ]")
 
-    def insert_file(self, file_data, file_type, uuid: str):
-        query = "INSERT INTO files (files_id, file, file_type) VALUES (?, ?, ?)"
+    def insert_file(self, file_data, uuid: str):
+        query = "INSERT INTO files (files_id, file_name,file, file_type) VALUES (? , ? , ? , ?)"
         self.cr.execute(
-            query, (self.uuid_to_id(str(uuid)), file_data.file.read(), file_type)
+            query,
+            (
+                self.uuid_to_id(str(uuid)),
+                file_data.filename,
+                file_data.file.read(),
+                os.path.splitext(file_data.filename)[1],
+            ),
         )
         self.db.commit()
+
+    def insert_response(self, resp: ClientResponse):
+        Query1 = "INSERT INTO response(id,command,response,result) VALUES(?,?,?,?)"
+        Query2 = "INSERT INTO response(id,command,result) VALUES(?,?,?)"
+        try:
+            if resp.response == "":
+                self.cr.execute(
+                    Query2,
+                    (self.uuid_to_id(str(resp.uuid)), resp.command, int(resp.result)),
+                )
+            else:
+                self.cr.execute(
+                    Query1,
+                    (
+                        self.uuid_to_id(str(resp.uuid)),
+                        resp.command,
+                        resp.response,
+                        int(resp.result),
+                    ),
+                )
+
+            self.db.commit()
+        except Exception as e:
+            logger.error(str(e))

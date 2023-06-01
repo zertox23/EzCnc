@@ -23,5 +23,5 @@ class CommandRequester(BaseModel):
 class ClientResponse(BaseModel):
     uuid: str
     command: str
-    isfile: bool
     response: str
+    result: int
