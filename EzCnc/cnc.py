@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile
 from Structs.Structs import Client, Command, CommandRequester, ClientResponse
-from Database import DB
+from Database import DB, Plots
 import os
 from loguru import logger
 
@@ -8,6 +8,8 @@ logger.add("LOGS.logs")
 Database = DB("Main Test")
 DEBUG = True
 NAME = "EZ CNC"
+
+plots = Plots(Database)
 
 app = FastAPI(debug=DEBUG, title=NAME)
 
@@ -55,3 +57,11 @@ def client_response(resp: ClientResponse):
     except Exception as e:
         logger.error(str(e))
         return {"Status": False}
+
+
+@app.get("/api/tests/plots", status_code=200)
+def tests_plots():
+    plt = plots.bar_responses()
+    plt.show()
+    plt = plots.pie_responses()
+    plt.show()
