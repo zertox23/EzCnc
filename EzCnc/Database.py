@@ -1,9 +1,9 @@
 import sqlite3
 from typing import Union
 from fastapi import UploadFile
-from Structs.Structs import Client, Command, CommandRequester, ClientResponse
+from EzCnc.Structs import Client, Command, CommandRequester, ClientResponse
 from loguru import logger
-from Exceptions import EzCncError
+from EzCnc.Exceptions import EzCncError
 import os
 import plotly.graph_objects as go
 
@@ -246,7 +246,7 @@ class Plots:
             occurrences.append(x)
         return countries, occurrences
 
-    def _RESPONSES(self, by_id: bool = False) -> tuple[list]:
+    def _RESPONSES_OCCURRENCES(self, by_id: bool = False) -> tuple[list]:
         query = "SELECT id, COUNT(*) AS mention_count FROM response GROUP BY id;"
         results = self.DB.cr.execute(query).fetchall()
         names, occurrences = [], []
@@ -268,7 +268,29 @@ class Plots:
             occurrences.append(x)
         return names, occurrences
 
-    def pie_working_commands_ratio(self, specific_command: Union[str, None] = None):
+    def _FILES_OCCURRENCES(self, by_id: bool = False) -> tuple[list]:
+        query = "SELECT files_id, COUNT(*) AS files_count FROM files GROUP BY files_id;"
+        results = self.DB.cr.execute(query).fetchall()
+        names, occurrences = [], []
+        if by_id:
+            for row in results:
+                names.append(row[0])
+                occurrences.append(row[1])
+        else:
+            for row in results:
+                names.append(self.DB.uuid_to_name(str(self.DB.id_to_uuid(str(row[0])))))
+                occurrences.append(row[1])
+
+        results = zip(names, occurrences)
+        results = sorted(results, key=lambda x: x[1], reverse=True)
+        print(results)
+        names, occurrences = [], []
+        for i, x in results:
+            names.append(i)
+            occurrences.append(x)
+        return names, occurrences
+
+    def _PIE_WORKING_COMMANDS_RATIO(self, specific_command: Union[str, None] = None):
         if specific_command is None:
             worked_Query = "SELECT COUNT(*) FROM response where result=1"
             didnt_work_Query = "SELECT COUNT(*) FROM response where result=0"
@@ -290,7 +312,7 @@ class Plots:
         except Exception as e:
             logger.error(str(e))
 
-    def bar_countries(self):
+    def _BAR_COUNTRIES(self):
         try:
             countries, occurrences = self._COUNTRY_OCCURRENCE()
             fig = go.Figure([go.Bar(x=countries, y=occurrences)])
@@ -298,21 +320,21 @@ class Plots:
         except Exception as e:
             logger.error(str(e))
 
-    def pie_countries(self):
+    def _PIE_COUNTRIES(self):
         try:
             labels, values = self._COUNTRY_OCCURRENCE()
             return self._PIE(labels, values)
         except Exception as e:
             logger.error(str(e))
 
-    def pie_responses(self, by_id: bool = False):
+    def _PIE_RESPONSES(self, by_id: bool = False):
         try:
             names, occurrences = self._RESPONSES(by_id)
             return self._PIE(names, occurrences)
         except Exception as e:
             logger.error(str(e))
 
-    def bar_responses(self, by_id: bool = False):
+    def _BAR_RESPONSES(self, by_id: bool = False):
         try:
             names, occurrences = self._RESPONSES(by_id)
             fig = go.Figure([go.Bar(x=names, y=occurrences)])
@@ -320,5 +342,36 @@ class Plots:
         except Exception as e:
             logger.error(str(e))
 
-    def bar_files_sent(self, by_id):
-        ...
+    def _BAR_FILES_SENT(self, by_id: bool = False):
+        try:
+            names, occurrences = self._FILES_OCCURRENCES(by_id)
+            fig = go.Figure([go.Bar(x=names, y=occurrences)])
+            return fig
+        except Exception as e:
+            logger.error(str(e))
+
+    def _PIE_FILES_SENT(self, by_id: bool = False):
+        try:
+            names, occurrences = self._FILES_OCCURRENCES(by_id)
+            fig = self._PIE(names, occurrences)
+            return fig
+        except Exception as e:
+            logger.error(str(e))
+
+    def files_sent(self, by_id: bool = False, graph: str = "bar"):
+        if graph.lower() == "pie":
+            return self._PIE_FILES_SENT(by_id)
+        else:
+            return self._PIE_FILES_SENT(by_id)
+
+    def responses(self, by_id: bool = False, graph: str = "bar"):
+        if graph.lower() == "pie":
+            return self._PIE_RESPONSES(by_id)
+        else:
+            return self._BAR_RESPONSES(by_id)
+
+    def countries(self, by_id: bool = False, graph: str = "bar"):
+        if graph.lower() == "pie":
+            return self._PIE_COUNTRIES()
+        else:
+            return self._BAR_COUNTRIES()
