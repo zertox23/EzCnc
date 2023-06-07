@@ -4,16 +4,27 @@ EzCnc is a CNC (Command and Control) tool that allows you to control a botnet of
 ## Project Structure
 
 ├── EzCnc
+
 │ ├── cnc.py
+
 │ ├── Database.py
+
 │ ├── Exceptions.py
+
 │ ├── init.py
+
 │ ├── Structs
+
 │ │ └── Structs.py
+
 │ └── Structs.py
+
 ├── Example
+
 │ └── main.py
+
 ├── images
+
 └── README.md
 
 - `EzCnc`: Contains the main code files for the CNC tool.
