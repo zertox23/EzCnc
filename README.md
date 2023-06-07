@@ -56,7 +56,7 @@ For detailed usage examples, refer to the `Example/main.py` file.
 
 ## Contributors
 
-- [Your Name](https://github.com/iq-thegoat)
+- [iq-thegoat](https://github.com/iq-thegoat)
 
 ## License
 
