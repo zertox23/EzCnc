@@ -13,11 +13,7 @@ EzCnc is a CNC (Command and Control) tool that allows you to control a botnet of
 
 │ ├── init.py
 
-│ ├── Structs
-
-│ │ └── Structs.py
-
-│ └── Structs.py
+│ |── Structs.py
 
 ├── Example
 
