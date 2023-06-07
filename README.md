@@ -42,7 +42,7 @@ To use EzCnc, follow these steps:
 1. Install the required dependencies listed in the `requirements.txt` file.
 2. Import the `CNC` class from `EzCnc.cnc` in your project.
 3. Initialize an instance of the `CNC` class with the desired configuration parameters.
-4. run uvicorn FILE_NAME:API_VARIABLE_NAME --port PORT
+4. run `uvicorn FILE_NAME:API_VARIABLE_NAME --port PORT`
 5. Use the API endpoints provided by the CNC class to manage clients, execute commands, and handle client responses.
 
 For detailed usage examples, refer to the `Example/main.py` file.
