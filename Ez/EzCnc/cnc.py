@@ -7,6 +7,7 @@ from faker import Faker
 from faker.providers import internet
 from loguru import logger
 import uvicorn
+from icecream import ic
 
 
 import random
@@ -19,7 +20,7 @@ class CNC:
     def __init__(
         self,
         db_name: str = "Database.db",
-        debug: bool = False,
+        debug: bool = True,
         name: str = "EzCnc",
         logs_path: str = "EzCnc_logs.logs",
     ):
@@ -52,14 +53,35 @@ class CNC:
                 return {"Status": False}
 
         @self.api.post("/api/client/response/file", status_code=200)
-        def client_response_file(file: UploadFile, UUID: str):
+        def client_response_file(file: UploadFile, UUID: str,command:str):
             try:
-                self.Database.insert_file(file, str(UUID))
+                self.Database.insert_file(file, str(UUID),command=command)
                 return {"Status": True}
             except Exception as e:
                 logger.error(str(e))
                 return {"Status": False}
+            
+        @self.api.get("/api/client/get_latest_file_path/{uuid}",status_code=200)
+        def latestfilepath(uuid:str):
+            try:
+                path = self.Database.get_latest_path(self.Database.uuid_to_id(uuid))
+                return {"Status":True,"path":str(path)}
+            except Exception as e:
+                ic(e)
+                return {"Status":False,"Error":str(e)}
 
+        @self.api.get("/api/client/update_latest_file_path/{uuid}/{path}",status_code=200)
+        def latestfilepath(uuid:str,path:str):
+            try:
+                ic(uuid,path)
+                id = self.Database.uuid_to_id(uuid)
+                ic(id)
+                self.Database.update_latest_path(id,str(path))
+                return {"Status":True,"path":path}
+            except:
+                return {"Status":False}
+
+        
         @self.api.post("/api/client/response/text", status_code=200)
         def client_response_text(resp: ClientResponse):
             try:

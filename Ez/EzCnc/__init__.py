@@ -1,2 +1,2 @@
 from EzCnc.cnc import CNC
-from EzCnc import disbot
+from EzCnc import better_disbot 

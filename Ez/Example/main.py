@@ -1,4 +1,4 @@
-from EzCnc import CNC, disbot
+from EzCnc import CNC, better_disbot as disbot
 import streamlit as st
 import asyncio
 import threading
@@ -6,13 +6,14 @@ import uvicorn
 app = CNC(
     db_name="Database", name="EZCNC", debug=True, logs_path="EZCNC_logs"
 )  # initiate the api
-# app.generate_fake_clients(10)
+#app.generate_fake_clients(5)
 api = app.api  # exporting the api class so that you can run   "uvicorn main:api"
 Database = app.Database
-TOKEN = "MTA4NTc0NjM0Nzg3OTE4MjM3Ng.GlzAic.0n312CVkVi1wMLHG14nfYXOmDwmDRQmsK3RtJ0"
+TOKEN = "MTA4NTc0NjM0Nzg3OTE4MjM3Ng.GvOjde.nt4AmgrRi_dZYrVszef6h3uJ85dEp4lwjqaX1Q"
 
 # Define a function to run the Discord bot
 def run_discord_bot(db,guild__id:str):
+    
     bot = disbot.BOT(db=db,guild_id=guild__id)
     bot.bot.run(TOKEN)
 

