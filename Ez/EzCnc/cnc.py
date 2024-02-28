@@ -1,7 +1,7 @@
 from typing import Any
 from fastapi import FastAPI, File, UploadFile
-from EzCnc.Structs import Client, Command, CommandRequester, ClientResponse
-from EzCnc.Database import DB, Plots
+from Structs import Client, Command, CommandRequester, ClientResponse
+from Database import DB, Plots
 import os
 from faker import Faker
 from faker.providers import internet
@@ -39,6 +39,8 @@ class CNC:
 
         @self.api.post("/api/cnc/command", status_code=200)
         def newcommand(command: Command):
+            ic(command)
+            logger.error(command)
             if self.Database.new_command(command):
                 return {"Status": True}
             else:

@@ -1,9 +1,9 @@
 import sqlite3
 from typing import Union
 from fastapi import UploadFile
-from EzCnc.Structs import Client, Command, CommandRequester, ClientResponse
+from Structs import Client, Command, CommandRequester, ClientResponse
 from loguru import logger
-from EzCnc.Exceptions import EzCncError
+from Exceptions import EzCncError
 import os
 import plotly.graph_objects as go
 import io
@@ -155,7 +155,7 @@ class DB:
             if self.cr.rowcount > 0:
                 ID = self.cr.execute(Query2, (client.uuid,)).fetchone()[0]
                 self.cr.execute(
-                    Query3, (ID, client.name, client.ip, client.country, client.location)
+                    Query3, (ID, client.name.lower(), client.ip, client.country, client.location)
                 )
                 self.cr.execute(Query4,(ID,None))
                 self.db.commit()
@@ -168,6 +168,7 @@ class DB:
 
     def new_command(self, command: Command) -> bool:
         try:
+            logger.error(command)
             Query = "INSERT INTO commands(command,target,parameter) VALUES(?,?,?)"
             self.cr.execute(
                 Query,

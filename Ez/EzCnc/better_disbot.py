@@ -7,6 +7,7 @@ import os
 from discord.ext import tasks
 import io
 import math
+from loguru import logger
 import aiohttp
 import json
 from tabulate import tabulate
@@ -275,6 +276,8 @@ class BOT:
         async def info(interaction: discord.Interaction, part: str = "disk"):
             try:
                 target = str(interaction.channel.category.name).split("__")[0].lower()
+                logger.error(target)
+                
                 r = self.Utils._new_command(
                     command="info", target=target, parameter=part
                 )
