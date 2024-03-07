@@ -4,17 +4,14 @@ import streamlit as st
 import asyncio
 import threading
 import uvicorn
-from dotenv import load_dotenv
-load_dotenv()
-
-TOKEN = os.environ.get("bottoken")
-server_id = os.environ.get("server_id")
 app = CNC(
     db_name="Database", name="EZCNC", debug=True, logs_path="EZCNC_logs"
 )  # initiate the api
 #app.generate_fake_clients(5)
 api = app.api  # exporting the api class so that you can run   "uvicorn main:api"
 Database = app.Database
+TOKEN = "MTIxMjA1NTIzMzYyNzI5OTg5MA.G_i4LP.ICKngGOGki9IoTZuTw3OUET0vT5S5al-Uefq5I"
+
 # Define a function to run the Discord bot
 def run_discord_bot(db,guild__id:str):
     
@@ -23,8 +20,8 @@ def run_discord_bot(db,guild__id:str):
 
 
 # Start the Discord bot in a separate thread
-discord_thread = threading.Thread(target=run_discord_bot, args=(Database,server_id))
-discord_thread.start()
+#discord_thread = threading.Thread(target=run_discord_bot, args=(Database,"1211372841996525580"))
+#discord_thread.start()
 
 # Start the API using uvicorn
 if __name__ == "__main__":

