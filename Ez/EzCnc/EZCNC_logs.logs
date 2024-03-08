@@ -1,1 +1,19 @@
 2024-03-08 16:20:31.436 | ERROR    | cnc:get_by_id:163 - Recursive use of cursors not allowed.
+2024-03-08 18:34:47.188 | ERROR    | cnc:newcommand:43 - command='browser_data' target='george anderson' parameter='chrome,all'
+2024-03-08 18:34:47.188 | ERROR    | Database:new_command:179 - command='browser_data' target='george anderson' parameter='chrome,all'
+2024-03-08 19:32:45.794 | ERROR    | cnc:newcommand:43 - command='browser_data' target='george anderson' parameter='chrome,all'
+2024-03-08 19:32:45.802 | ERROR    | Database:new_command:179 - command='browser_data' target='george anderson' parameter='chrome,all'
+2024-03-08 19:34:46.150 | ERROR    | cnc:newcommand:43 - command='info' target='george anderson' parameter='all'
+2024-03-08 19:34:46.150 | ERROR    | Database:new_command:179 - command='info' target='george anderson' parameter='all'
+2024-03-08 19:49:10.899 | ERROR    | Database:new_command:192 - Logger.log() missing 1 required positional argument: '_Logger__message'
+2024-03-08 19:49:35.289 | ERROR    | Database:new_command:192 - Logger.log() missing 1 required positional argument: '_Logger__message'
+2024-03-08 19:51:10.260 | ERROR    | Database:new_command:192 - Logger.log() missing 1 required positional argument: '_Logger__message'
+2024-03-08 19:53:39.978 | ERROR    | Database:new_command:192 - Logger.log() missing 1 required positional argument: '_Logger__message'
+2024-03-08 19:54:12.894 | ERROR    | Database:new_command:192 - Logger.log() missing 1 required positional argument: '_Logger__message'
+2024-03-08 19:55:56.241 | ERROR    | Database:new_command:192 - Logger.log() missing 1 required positional argument: '_Logger__message'
+2024-03-08 20:02:06.493 | ERROR    | Database:insert_response:312 - execute expected at most 2 arguments, got 3
+2024-03-08 20:02:06.519 | ERROR    | Database:insert_response:312 - execute expected at most 2 arguments, got 3
+2024-03-08 20:02:06.559 | ERROR    | Database:insert_response:312 - execute expected at most 2 arguments, got 3
+2024-03-08 20:02:06.560 | ERROR    | Database:insert_response:312 - execute expected at most 2 arguments, got 3
+2024-03-08 20:02:06.573 | ERROR    | Database:insert_response:312 - execute expected at most 2 arguments, got 3
+2024-03-08 20:02:06.601 | ERROR    | Database:insert_response:312 - execute expected at most 2 arguments, got 3

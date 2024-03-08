@@ -27,6 +27,11 @@
         margin: 50px; /* Add margin around each link */
         text-decoration: none; /* Remove default underline from links */
         color: #fff; /* Set text color */
+        transition: transform 0.3s ease; /* Add smooth transition */
+    }
+
+    .victim-link:hover {
+        transform: scale(1.05) rotate(10deg); /* Increase size and rotate on hover */
     }
 
     .victim-image {
@@ -35,10 +40,20 @@
         display: block; /* Ensure image is displayed as block element */
         margin-bottom: 10px; /* Add space between image and text */
         border-radius: 5px; /* Add some rounded corners to the image */
+        transition: transform 0.3s ease; /* Add smooth transition */
+    }
+
+    .victim-image:hover {
+        transform: scale(1.1) rotate(20deg); /* Increase size and rotate on hover */
     }
 
     .victim-name {
         margin: 0; /* Remove default margin */
+        transition: color 0.3s ease; /* Add smooth transition */
+    }
+
+    .victim-link:hover .victim-name {
+        color: #FF5733; /* Change text color on hover */
     }
 </style>
 

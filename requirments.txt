@@ -1,0 +1,16 @@
+fastapi
+uvicorn 
+discord 
+faker 
+loguru 
+icecream
+plotly
+tabulate
+aiohttp
+requests
+wmi
+streamlit
+python-dotenv
+python-multipart
+psutil
+pycryptodomex

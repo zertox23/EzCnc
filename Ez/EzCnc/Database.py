@@ -137,7 +137,7 @@ class DB:
         
     def get_by_id(self,id:str):
         resp = self.cr.execute("SELECT * FROM victims_data WHERE data_id = ?",(id,))
-        result = resp.fetchone()
+        result = resp.fetchall()
         if result:
             return(result)      
         else:
@@ -176,7 +176,6 @@ class DB:
 
     def new_command(self, command: Command) -> bool:
         try:
-            logger.error(command)
             Query = "INSERT INTO commands(command,target,parameter) VALUES(?,?,?)"
             self.cr.execute(
                 Query,
@@ -188,10 +187,12 @@ class DB:
             )
             self.db.commit()
             return True
-        except TypeError:
+        except TypeError as e:
+            logger.error(e)
             raise EzCncError(f"Invalid victim name => unavailable in the database")
 
         except Exception as e:
+            logger.error(e)
             raise EzCncError(f"Exception occured while adding a new command [ {e} ]")
 
     def iscommanded(self, Requester: CommandRequester) -> Union[Command, bool]:

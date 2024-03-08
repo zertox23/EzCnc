@@ -40,7 +40,6 @@ class CNC:
         @self.api.post("/api/cnc/command", status_code=200)
         def newcommand(command: Command):
             ic(command)
-            logger.error(command)
             if self.Database.new_command(command):
                 return {"Status": True}
             else:
@@ -162,8 +161,9 @@ class CNC:
             except Exception as e:
                 logger.error(e)
                 return {"Status":False,"data":None}
-            
-            
+        
+        @self.api.get("/api/cnc/responses")
+        def get_all_responses()
     def _GENERATE_FAKE_CLIENTS(self):
         latitude = fake.latitude()
         longitude = fake.longitude()
