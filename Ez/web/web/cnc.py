@@ -37,5 +37,7 @@ class Api:
         else:
             False
 
+    def get_response(id:int):
+        ...
 if __name__ == "__main__":
     print(Api.get_all_victims())
