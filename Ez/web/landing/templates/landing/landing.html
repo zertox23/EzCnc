@@ -1,0 +1,45 @@
+{% extends 'landing/base.html' %}
+
+{% block content %}
+<!-- Top bar with the name EzCnc -->
+
+<form method="POST">
+    <div class="image-container">
+        {% for victim in victims %}
+            <a href="control/{{victim.id}}" class="victim-link">
+                <img class="victim-image" src="{{ victim.img }}" alt="Clickable Image">
+                <p class="victim-name">{{ victim.name }}</p>
+            </a>
+        {% endfor %}
+    </div>
+</form>
+
+<style>
+
+    .image-container {
+        display: flex; /* Use flexbox to display images side by side */
+        justify-content: center; /* Center images horizontally */
+        flex-wrap: wrap; /* Allow images to wrap to the next line if needed */
+    }
+
+    .victim-link {
+        text-align: center; /* Center the text */
+        margin: 50px; /* Add margin around each link */
+        text-decoration: none; /* Remove default underline from links */
+        color: #fff; /* Set text color */
+    }
+
+    .victim-image {
+        width: 150px; /* Set the width of each image */
+        height: auto; /* Maintain aspect ratio */
+        display: block; /* Ensure image is displayed as block element */
+        margin-bottom: 10px; /* Add space between image and text */
+        border-radius: 5px; /* Add some rounded corners to the image */
+    }
+
+    .victim-name {
+        margin: 0; /* Remove default margin */
+    }
+</style>
+
+{% endblock %}

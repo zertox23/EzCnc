@@ -153,8 +153,16 @@ class CNC:
                 return {"Status":True}
             except:
                 return {"Status":False}
+        
+        @self.api.get("/api/cnc/getbyid/{id}")
+        def get_by_id(id:int):
+            try:
+                user = self.Database.get_by_id(id)
+                return {"Status":True,"data":user}
+            except Exception as e:
+                logger.error(e)
+                return {"Status":False,"data":None}
             
-
             
     def _GENERATE_FAKE_CLIENTS(self):
         latitude = fake.latitude()

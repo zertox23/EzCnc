@@ -1,0 +1,28 @@
+<!-- base.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EzCnc{% endblock %}</title>
+    <!-- Include CSS files, meta tags, etc. -->
+</head>
+<body>
+
+{% include 'landing/top_bar.html' %}
+
+<div class="content">
+    {% block content %}
+    <!-- Content specific to each page -->
+    {% endblock %}
+</div>
+
+</body>
+</html>
+<style>
+    body {
+        background-color: #222; /* Dark background color */
+        color: #fff; /* Light text color */
+    }
+</style>

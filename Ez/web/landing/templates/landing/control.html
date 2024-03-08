@@ -1,0 +1,50 @@
+{% extends 'landing/base.html' %}
+
+{% block content %}
+<!-- Top bar with the name EzCnc -->
+
+<form method="POST">
+    <div class="victim-info-container">
+        <table class="victim-info-table">
+            <tr>
+                <th>IP</th>
+                <td>{{ victim.ip }}</td>
+            </tr>
+            <tr>
+                <th>Location</th>
+                <td>{{ victim.location }}</td>
+            </tr>
+            <tr>
+                <th>Name</th>
+                <td>{{ victim.name }}</td>
+            </tr>
+            <tr>
+                <th>Country</th>
+                <td>{{ victim.country }}</td>
+            </tr>
+        </table>
+    </div>
+</form>
+
+<style>
+    .victim-info-container {
+        margin: 20px; /* Add margin around the victim info table */
+    }
+
+    .victim-info-table {
+        width: 100%; /* Set table width to 100% */
+        border-collapse: collapse; /* Collapse border spacing */
+    }
+
+    .victim-info-table th, .victim-info-table td {
+        border: 1px solid #fff; /* Add border to table cells */
+        padding: 8px; /* Add padding to table cells */
+        text-align: left; /* Align text to the left */
+    }
+
+    .victim-info-table th {
+        background-color: #444; /* Darker background color for table header */
+    }
+</style>
+
+{% endblock %}

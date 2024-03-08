@@ -134,7 +134,15 @@ class DB:
             return int(result[0])
         else:
             return None
-
+        
+    def get_by_id(self,id:str):
+        resp = self.cr.execute("SELECT * FROM victims_data WHERE data_id = ?",(id,))
+        result = resp.fetchone()
+        if result:
+            return(result)      
+        else:
+            return None
+        
     def id_to_uuid(self, id: int) -> str:
         resp = self.cr.execute("SELECT uuid FROM victims WHERE id=?", (id,))
         result = resp.fetchone()
