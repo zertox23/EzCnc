@@ -25,5 +25,5 @@ def run_discord_bot(db,guild__id:str):
 
 # Start the API using uvicorn
 if __name__ == "__main__":
-    uvicorn.run(api, host="127.0.0.1", port=8000)
+    uvicorn.run(api, host="0.0.0.0", port=6999)
 

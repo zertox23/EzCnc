@@ -530,6 +530,7 @@ class BOT:
                 Channels = {}
                 uuid = str(category.name).split("__")[1].strip()
                 #ic(uuid)
+                
                 responses = self.db.get_latest_responses(
                     id=self.db.uuid_to_id(uuid), time=time
                 )  # tuple
@@ -683,3 +684,5 @@ class BOT:
             except Exception as e:
                 pass
                 #ic(e)
+
+#! gets uuid

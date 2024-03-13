@@ -162,8 +162,18 @@ class CNC:
                 logger.error(e)
                 return {"Status":False,"data":None}
         
-        @self.api.get("/api/cnc/responses")
-        def get_all_responses()
+        
+        @self.api.get("/api/cnc/responses/{id}/{time}")
+        def get_all_responses(id:int,time:int):
+            try:
+                table = self.Database.get_latest_responses(id,time=time)
+                ic(table)
+                return {"Status":True,"data":table}
+            except Exception as e:
+                logger.error(e)
+                return {"Status":False,"data":None}
+            
+    
     def _GENERATE_FAKE_CLIENTS(self):
         latitude = fake.latitude()
         longitude = fake.longitude()
@@ -185,12 +195,10 @@ class CNC:
         commands = ["cam", "data", "time", "ip"]
         if len(self.Database._return_all_uuids()) > 0:
             for uuid in self.Database._return_all_uuids():
-                r = random.choice([1, 0])
-                if r > 0:
-                    response = ClientResponse(
-                        uuid=str(uuid[0]),
-                        command=str(random.choice(commands)),
-                        response=str(random.choice(["", "RESPONSE"])),
-                        result=random.choice([0, 1]),
-                    )
-                    self.Database.insert_response(resp=response)
+                response = ClientResponse(
+                    uuid=str(uuid[0]),
+                    command=str(random.choice(commands)),
+                    response=str(random.choice(["", "RESPONSE"])),
+                    result=random.choice([0, 1]),
+                )
+                self.Database.insert_response(resp=response)

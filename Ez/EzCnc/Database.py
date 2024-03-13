@@ -134,7 +134,12 @@ class DB:
             return int(result[0])
         else:
             return None
-        
+
+    def _executequery(self,query:str):
+        resp = self.cr.execute(query)
+        result = resp.fetchall()
+        return result
+    
     def get_by_id(self,id:str):
         resp = self.cr.execute("SELECT * FROM victims_data WHERE data_id = ?",(id,))
         result = resp.fetchall()
@@ -244,6 +249,7 @@ class DB:
         Query = "SELECT last_path FROM file_manager WHERE id=?"
         resp = self.cr.execute(Query,(id,))
         return resp.fetchone()[0]
+    
     def _return_all_uuids(self) -> list:
         query = "SELECT uuid from victims"
         return self.cr.execute(query).fetchall()
@@ -272,19 +278,28 @@ class DB:
         SELECT files_id,file_name,file,file_type,received_date
         FROM files WHERE files_id=? AND sent_before = 0 AND received_date >= datetime('now', ?)
     ) AS subquery
-    ORDER BY response_time DESC LIMIT 1;"""
-        res = self.cr.execute(query,(id,'-{} seconds'.format(time),id,'-{} seconds'.format(time))).fetchone()
-        if res:
-            ic(res)
-            res2 = res[2]
-            if type(res2) == bytes:
-                File = io.BytesIO(res2)
-                res = (res[0],res[1],File,res[3],res[4])
-                return (res,"File")
-            else:
-                return (res,"Text")
-        else:
-            ic(res)
+    ORDER BY response_time DESC"""
+        try:
+            res = self.cr.execute(query,(id,'-{} seconds'.format(time),id,'-{} seconds'.format(time))).fetchall()
+            #ic(res)
+            for resp in res:
+                ind = res.index(resp)
+                lstresp = list(resp)
+                file = lstresp[2]
+                if type(file) == bytes:
+                    File = io.BytesIO(file)
+                    resp2 = [lstresp[0],lstresp[1],File,lstresp[3],lstresp[4]]
+                    ic(resp2)
+                    resp2.append("File")
+                    res[ind] = resp2
+                    ic(res[ind])
+                else:
+                    ind = res.index(resp)                    
+                    lstresp.append("Text")
+                    res[ind] = lstresp
+            return res
+        except Exception as e:
+            ic(e)
     def insert_response(self, resp: ClientResponse):
         Query1 = "INSERT INTO response(id,command,response,result,sent_before) VALUES(?,?,?,?,?)"
         Query2 = "INSERT INTO response(id,command,result,sent_before) VALUES(?,?,?,?)"

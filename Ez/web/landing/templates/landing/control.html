@@ -35,9 +35,27 @@
     </div>
 
     <div class="response module">
+        <!-- Response Title -->
         <h2>Response</h2>
-        <div id="responseDisplay">
-            <!-- Response from the server will be displayed here -->
+        <!-- Response Display Container -->
+        <div id="responseDisplay" class="response-container">
+            {% for response in responses %}
+                {% if response|last == "Text"%}
+                    <!-- Response Item -->
+                    <div class="responsediv">
+                        <p class="responsecommand">command >> {{response.2}}</p>
+                        <p class="small">response date | {{response.1}}</p>
+                        <p class= "response"> {{response.3}}</p>
+                    </div>
+                {% else %}
+                    <div class="responsediv">
+                        <p class="responsecommand">command >> {{response.5}}</p>
+                        <p class="small">response date | {{response.4}}</p>
+                        <p class= "response">{{response.1}}</p>
+                        <button class="download-btn">Download <i class="fas fa-download"></i></button>
+                    </div>
+                {%endif%}
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -55,7 +73,14 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
+        margin:20px;
     }
+
+    .response-container {
+        max-height: 300px; /* Set max height */
+        overflow-y: auto; /* Add vertical scrollbar when content exceeds max height */
+    }
+
 
     .module {
         width: 30%;
@@ -120,14 +145,55 @@
         border-radius: 20px;
     }
     .bigger:hover{
-        transform: scale(1.1)
+        transform: scale(1.1);
     }
     .info {
         margin: 5px;
         cursor: pointer; /* Add cursor pointer to indicate clickable */
     }
     .info:hover {
-        transform: scale(1.1)
+        transform: scale(1.1);
+    }
+    .responsediv {
+        background-color: #555; /* Adjusted background color */
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.75); /* Added box shadow */
+    }
+
+    .responsecommand {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .small {
+        font-size: 0.9em;
+        color: #ccc; /* Adjusted text color */
+    }
+
+    .response {
+        color: #fff; /* Light text color */
+        font-size: 1.1em;
+    }
+
+    /* Download button styles */
+    .download-btn {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .download-btn:hover {
+        background-color: #45a049;
+    }
+
+    .download-btn i {
+        margin-left: 5px;
     }
 </style>
 {% endblock %}

